@@ -2,7 +2,7 @@ title: Sungur Labs
 author: GitHub User
 email: 
 description: > # this means to ignore newlines until "show_exerpts:"
-  Description here.
+  This is a project that aims to do security research around low-level area.
 show_excerpts: false # set to true to show excerpts on the homepage
 
 paginate: 1
