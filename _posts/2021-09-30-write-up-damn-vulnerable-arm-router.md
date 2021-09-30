@@ -89,7 +89,8 @@ We can search for the instructions we need within the program, as well as in sha
 We will need to import the library file to our host machine so that we can search for the instructions we need in the libc.so library with the Ropper tool. For this, we can copy the library file to the server root directory and bring it to our host machine with the help of wget.
 
 ```bash
-cp /lib/libc.so /www/htdocs/ wget http://192.168.227.128/libc.so
+cp /lib/libc.so /www/htdocs/ 
+wget http://192.168.227.128/libc.so
 ```
 
 When we searched for the mov command to place the sp address in the pc register with the command "ropper -file libc.so -search "mov pc, sp"" we could not get any results.
