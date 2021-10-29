@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.7.1 -->
+<title>Xiaomi Smart Camera - Recovering Firmware and Backdooring | Sungur Labs</title>
+<meta name="generator" content="Jekyll v3.9.0" />
+<meta property="og:title" content="Xiaomi Smart Camera - Recovering Firmware and Backdooring" />
+<meta name="author" content="GitHub User" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="This article explains the steps we take until we get root shell access on the device." />
+<meta property="og:description" content="This article explains the steps we take until we get root shell access on the device." />
+<link rel="canonical" href="http://localhost:4000/2021/07/14/Xiaomi-Smart-Camera-Recovering-Firmware-and-Backdooring.html" />
+<meta property="og:url" content="http://localhost:4000/2021/07/14/Xiaomi-Smart-Camera-Recovering-Firmware-and-Backdooring.html" />
+<meta property="og:site_name" content="Sungur Labs" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2021-07-14T00:00:00-07:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Xiaomi Smart Camera - Recovering Firmware and Backdooring" />
+<script type="application/ld+json">
+{"@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"http://localhost:4000/2021/07/14/Xiaomi-Smart-Camera-Recovering-Firmware-and-Backdooring.html"},"url":"http://localhost:4000/2021/07/14/Xiaomi-Smart-Camera-Recovering-Firmware-and-Backdooring.html","dateModified":"2021-07-14T00:00:00-07:00","author":{"@type":"Person","name":"GitHub User"},"headline":"Xiaomi Smart Camera - Recovering Firmware and Backdooring","description":"This article explains the steps we take until we get root shell access on the device.","datePublished":"2021-07-14T00:00:00-07:00","@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css">
+  <link rel="icon" type="image/png" href="/assets/favicon.png" />
+  <link rel="stylesheet" href="/assets/css/magnific-popup.css"><link type="application/atom+xml" rel="alternate" href="http://localhost:4000/feed.xml" title="Sungur Labs" /><script src="https://code.jquery.com/jquery-3.2.0.min.js"></script> 
+  <script src="/assets/js/jquery.magnific-popup.js"></script>
+</head>
+<body><div class="site-header">
+  <div class="wrapper">
+    <a class="site-title" rel="author" href="/">Sungur Labs<b class="command_prompt"></b><b class="blinking_cursor">_</b></a>
+    <span class="social_links">
+        
+        
+        <a class="color-cyan-hover" href="https://twitter.com/sungurlabs"><i class="fab fa-twitter-square"></i></a>
+        
+        
+        
+        <a class="color-purple-hover" href="https://github.com/sungurlabs"><i class="fab fa-github-square"></i></a>
+        
+        
+    </span>
+  </div>
+</div>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        
+  <div class="author-box">
+    
+    
+        <img src="
+            /assets/avatar.png
+        " class="author-avatar" alt="Avatar" />
+    
+This is a project that aims to do security research around low-level area.
+
+</div>
+
+
+<div class="post">
+  <h1 class="post-title">Xiaomi Smart Camera - Recovering Firmware and Backdooring</h1>
+  
+  <div class="post-tags">
+      
+      <a class="tag" href="/tag/iot/">iot</a>
+      
+      <a class="tag" href="/tag/hardware/">hardware</a>
+      
+      <a class="tag" href="/tag/camera/">camera</a>
+      
+  </div>
+  
+  <div class="post-date">Published on 14 Jul 2021</div>
+  
+  <noscript>
+    <div class="post-description">This article explains the steps we take until we get root shell access on the device.</div>
+  </noscript>
+  <div id="animated-post-description" class="post-description" style="display: none;"></div>
+  
+  <p><code class="language-plaintext highlighter-rouge">Xiaomi Mi Home Security Camera 360°</code> is an IP camera which has night vision, 360° PTZ control and motion detection features.</p>
+
+<p>Users can instantly remote control the camera they located in their home. In addition to live video streaming, it can also do voice communication through the microphone and speaker it has.</p>
+
+<p>Users can connect with the device via the Xiaomi cloud service connected mobile application (<code class="language-plaintext highlighter-rouge">MI Home</code>).</p>
+
+<p>In this article, we will be talking about the steps we take until we get root shell access on the device.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th><span style="color:red">Model</span></th>
+      <th><span style="color:red">Picture</span></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><span style="color:skyblue">MJSXJ09CM</span></td>
+      <td><img src="/images/MJSXJ09CM.png" alt="MJSXJ09CM" /></td>
+    </tr>
+  </tbody>
+</table>
+
+<p>After installation via the mobile application, an IP address is assigned to the device. As you can see from the NMAP output, the device does not have any open port.</p>
+
+<p><img src="/images/nmap.png" alt="NMAP" /></p>
+
+<p>At this point, we could test the mobile application, which is the only place where we can interact with the device remotely. But for now we’ve decided to disassemble the device and take a closer look at the hardware. It will be useful for us if we can identifying a serial port on the board.</p>
+
+<p><img src="/images/cam_1.png" alt="cam_1" /></p>
+
+<p>The device has a 32-bit ARM processor and 16 MB flash memory.</p>
+
+<p><span style="color:red">SoC: </span> <span style="color:orange">SigmaStar SSC323 ARM Cortex-A7</span></p>
+
+<p><span style="color:red">Flash chip: </span> <span style="color:orange">KHIC MX25L12833F</span></p>
+
+<p><img src="/images/board_1.png" alt="board_1" /></p>
+
+<p><img src="/images/board_2.png" alt="board_2" /></p>
+
+<p><img src="/images/cpu.png" alt="cpu" /> 
+<span style="color:deepskyblue">SoC</span></p>
+
+<p><img src="/images/flash.png" alt="flash" />
+<span style="color:deepskyblue">Flash chip</span></p>
+
+<p>The <code class="language-plaintext highlighter-rouge">MJSXJ09CM</code>’s board is almost exactly the same as the <code class="language-plaintext highlighter-rouge">MJSXJ05CM</code>’s board. But the board of the <code class="language-plaintext highlighter-rouge">MJSXJ02CM</code> (older one) was slightly different. Inspired by the UART pins identified by the researchers on the <code class="language-plaintext highlighter-rouge">MJSXJ02CM</code>, we tested the pins in the same area on our own device.
+<code class="language-plaintext highlighter-rouge">MJSXJ02CM</code> uart <a href="https://github.com/telmomarques/xiaomi-360-1080p-hacks/issues/9#issuecomment-471491901">pins.</a></p>
+
+<p>Although there is no label around the pins, we easily identified the UART pins with the help of a multimeter.</p>
+
+<p><img src="/images/uart_1.png" alt="uart_1" /></p>
+
+<p>The soldered image of the TX, RX and GND pins is as in the photo.</p>
+
+<p><img src="/images/uart_2.png" alt="uart_2" /></p>
+
+<p>The tool we use for the UART connection is FT232RL.                                      <br />
+<img src="/images/ft232rl.png" alt="ft232rl" /></p>
+
+<p>After connecting the FT232RL to the computer via USB, we started the serial communication program by command below.</p>
+
+<p><span style="color:red">UART baudrate:</span> 115200</p>
+
+<p><span style="color:red">Terminal emulator:</span> Picocom</p>
+
+<p><img src="/images/picocom.png" alt="picocom" /></p>
+
+<p>We will see the outputs of the entire Boot process as soon as we power the camera.</p>
+
+<p><img src="/images/booting.png" alt="booting" /></p>
+
+<p>After the boot process is complete, we cannot get an active shell access we can provide any inputs.</p>
+
+<p>In some cases, you might then see a prompt saying that you can press a key to activate console. Or some cases where activation can be achieved by any special key combination. Unfortunately, we were not so lucky in our case and we couldn’t get access to the easy way.</p>
+
+<p>We decided to go through the bootloader. Most of the time, it is possible to get firmware with bootloader features. This device uses U-Boot which is very popular for embedded devices. As soon as the device is powered on, if you hold down the <code class="language-plaintext highlighter-rouge">Enter</code> key, autoboot will be stop and the U-Boot console will be active.</p>
+
+<p><img src="/images/stop_autoboot.png" alt="stop_autoboot" /></p>
+
+<p>All supported commands can be listed with the <code class="language-plaintext highlighter-rouge">Help</code> command.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>SigmaStar <span class="c"># help</span>
+</code></pre></div></div>
+
+<p><img src="/images/help.png" alt="help" /></p>
+
+<p>Here you can see the boot parameters passed to the kernel.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>SigmaStar <span class="c"># printenv</span>
+</code></pre></div></div>
+
+<p><img src="/images/bootargs.png" alt="bootargs" /></p>
+
+<p>If we set the init parameter here to <code class="language-plaintext highlighter-rouge">/bin/sh</code>, we are telling the Linux kernel to run /bin/sh as init instead of system init. This gives us the root shell during the boot time.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>SigmaStar <span class="c"># setenv bootargs console=ttyS0,115200 root=/dev/mtdblock2 rootfstype=squashfs ro init=/bin/sh LX_MEM=0x3fe0000 mma_heap=mma_heap_name0,miu=0,sz=0x1400000 mma_memblock_remove=1</span>
+</code></pre></div></div>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>SigmaStar <span class="c"># sf probe 0;sf read 0x22000000 ${sf_kernel_start} ${sf_kernel_size};bootm 0x22000000</span>
+</code></pre></div></div>
+
+<p><img src="/images/temp_sh.png" alt="temp_sh" /></p>
+
+<p><img src="/images/temp_sh2.png" alt="temp_sh2" /></p>
+
+<p><img src="/images/temp_sh3.png" alt="temp_sh3" /></p>
+
+<p>But this shell did not allow us to make changes to the system as the file system is <code class="language-plaintext highlighter-rouge">read-only</code> squashfs. If we had a writable filesystem, maybe we could add a script to run a telnet or ssh service on the system.</p>
+
+<h1 id="obtaining-firmware-through-u-boot">Obtaining Firmware Through U-Boot</h1>
+
+<p>There are several methods of obtaining firmware via the bootloader. One of them is to use tftp, which is useless in our scenario since we don’t have an ethernet interface.</p>
+
+<p>Another technique is to use the very primitive <code class="language-plaintext highlighter-rouge">memory display</code> method. We can print the memory contents on the U-boot console using the <code class="language-plaintext highlighter-rouge">md</code> command. If we know the starting address of the firmware in the memory and the size, we can print all this space on the screen. The simplest way to find out this information is to look at the <code class="language-plaintext highlighter-rouge">bootcmd</code> parameter in the output of the <code class="language-plaintext highlighter-rouge">printenv</code> command.</p>
+
+<p><img src="/images/bootcmd.png" alt="bootcmd" /></p>
+
+<p>The <code class="language-plaintext highlighter-rouge">sf read</code> command is used to copy flash content to RAM. 0x22000000 specifies from which address in RAM the content will be copied. This was the first value we needed. 
+The other value we need is the flash size. We could already see this value when the bootloader first started.</p>
+
+<p><img src="/images/flash_detected.png" alt="flash_detected" /></p>
+
+<p>We have a 16 MB flash, which means 0x1000000 in hex.</p>
+
+<p>Another way to find out the total mapped data size is to look at the partition information in the boot output.</p>
+
+<p><img src="/images/partitions.png" alt="partitions" /></p>
+
+<p>Final command for printing the all flash content:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>SigmaStar <span class="c"># md.b 0x22000000 0x1000000</span>
+</code></pre></div></div>
+
+<p>Printing to the screen will take a long time, and before doing this, do not forget to save the console output to a file.</p>
+
+<p>For this, the save feature of the terminal emulator you use can be preferred. Here is the another option:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>picocom <span class="nt">-b</span> 115200 /dev/ttyUSB0 | <span class="nb">tee </span>flash.out
+</code></pre></div></div>
+
+<p>We have a file with the output of the entire console (in our case <code class="language-plaintext highlighter-rouge">flash.out</code>). Currently this file is still not a binary file, it just contains some plain-text and hex characters. We have to manually clean the unnecessary content in this file. Only memory output should remain.</p>
+
+<p><img src="/images/hexdump.png" alt="hexdump" /></p>
+
+<p>Then we need to convert this hexdump to a binary file. You can find the python code that does this conversion from <a href="https://github.com/SungurLabs/Firmware-scripts/blob/main/hex2bin.py">here</a>. The <code class="language-plaintext highlighter-rouge">hex2bin.py</code> code does this automatically. All you have to do is give the hexdump file as input and specify the name of the output file.</p>
+
+<p><img src="/images/hex2bin.png" alt="hex2bin" /></p>
+
+<p>Finally, we have a firmware of the device. Now we can extract it with the help of binwalk and examine it.</p>
+
+<p><img src="/images/binwalk.png" alt="binwalk" />
+<img src="/images/binwalk2.png" alt="binwalk2" /></p>
+
+<p>In this article, our main goal is to get shell access on the device as a priority, so we postpone firmware analysis for now.</p>
+
+<h1 id="firmware-backdooring">Firmware Backdooring</h1>
+
+<p>We somehow got the firmware of the device, but we still couldn’t get a shell that we could access remotely to the live system. So we decided to modify the original firmware and put a backdoor in it.</p>
+
+<p>First we have to extract the partitions of the firmware and then access the file system that we are going to modify.
+The offsets of each partition should be added to the script. You can find these values from the binwalk output.
+You can access <code class="language-plaintext highlighter-rouge">packer</code> and <code class="language-plaintext highlighter-rouge">unpacker</code> scripts on our github <a href="https://github.com/SungurLabs/Firmware-scripts">repo</a>.</p>
+
+<p><img src="/images/unpacker.png" alt="unpacker" /></p>
+
+<p>Squashfs are a compressed read-only file system and are commonly found on embedded systems. In this way, users are prevented from making changes to the file system. But after we uncompress this file system with the <code class="language-plaintext highlighter-rouge">unsquashfs</code> tool, we will be able to make new additions to it. Then we will create a new squashfs filesystem with these updated files.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>unsquashfs <span class="nt">-d</span> squashfs_out squashfs
+</code></pre></div></div>
+
+<p><img src="/images/unaqashfs.png" alt="unaqashfs" /></p>
+
+<p><img src="/images/squasfs_files.png" alt="squasfs_files" /></p>
+
+<p>One of the best places to add backdoor is init scripts(<code class="language-plaintext highlighter-rouge">/etc/init.d/</code>). Because these scripts are run while the device is booting and does not require a condition. The actual init script here is <code class="language-plaintext highlighter-rouge">rcS</code>, and it runs files in this directory that starting names begin with a capital <code class="language-plaintext highlighter-rouge">S</code>, in numerical order. These are the start scripts. Likewise, the <code class="language-plaintext highlighter-rouge">rcK</code> script is run at shutdown.</p>
+
+<p>Telnet can be used to create a backdoor, but the device does not have a <code class="language-plaintext highlighter-rouge">telnetd</code> binary. There is a limited version of <code class="language-plaintext highlighter-rouge">Busybox</code>. At this point we decided to put a statically compiled <code class="language-plaintext highlighter-rouge">busybox</code> on the device that supports <code class="language-plaintext highlighter-rouge">telnetd</code>. 
+The Busybox binary can be download <a href="https://www.busybox.net/downloads/binaries/1.21.1/busybox-armv7l">here</a>. We can put this binary on sdcard and run it from there.</p>
+
+<p>The one-line command we added to the <code class="language-plaintext highlighter-rouge">rcS</code> script is as shown in the picture.                                    <br />
+<img src="/images/busybox.png" alt="busybox" /></p>
+
+<p>Adding <code class="language-plaintext highlighter-rouge">backdoor</code> is complete. Now it’s time to create a new squashfs filesystem with updated init script. The tool we will use to do this is called <code class="language-plaintext highlighter-rouge">mksquashfs</code>. But first we need to know the <code class="language-plaintext highlighter-rouge">compression type</code> and <code class="language-plaintext highlighter-rouge">block size</code> of the squashfs we will create. We can get this informations from the details of the original squashfs by running <code class="language-plaintext highlighter-rouge">unsquashfs</code> with the <code class="language-plaintext highlighter-rouge">-s</code> parameter.</p>
+
+<p><img src="/images/squashfs_s.png" alt="squashfs_s" /></p>
+
+<p>Compression is <code class="language-plaintext highlighter-rouge">xz</code> and blok size is <code class="language-plaintext highlighter-rouge">131072</code>.</p>
+
+<p>We are ready to create the file system.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>mksquashfs squashfs_out/ squashfs_new <span class="nt">-comp</span> xz <span class="nt">-b</span> 131072
+<span class="nv">$ </span><span class="nb">mv </span>squashfs_new squashfs
+</code></pre></div></div>
+
+<p><img src="/images/mksquashfs.png" alt="mksquashfs" /></p>
+
+<p>Don’t forget to replace the old squashfs with the new one.</p>
+
+<p>The last thing we need to do to create the final firmware is to repack the unpacked partitions.</p>
+
+<p><img src="/images/firmware_new.png" alt="firmware_new" /></p>
+
+<p>Now our backdoored firmware is ready.</p>
+
+<p>We have 2 methods to upload the new firmware we have modified to the device. One of them is firmware update process via <code class="language-plaintext highlighter-rouge">sdcard</code>. The camera checking the existence of <code class="language-plaintext highlighter-rouge">/mnt/sdcard/tf_update.img</code>, <code class="language-plaintext highlighter-rouge">/mnt/sdcard/tf_all.img</code>, <code class="language-plaintext highlighter-rouge">/mnt/sdcard/tf_all_recovery.img</code> files in sdcard every time it boot up. We can start the update procedure of the device by placing the firmware on the sdcard (firmware has to be named <code class="language-plaintext highlighter-rouge">tf_update.img</code>).</p>
+
+<p><img src="/images/not_exist.png" alt="not_exist" /></p>
+
+<p>However, we were not successful in this process because the device does the signature verification of the file.</p>
+
+<p><img src="/images/hashing.png" alt="hashing" /></p>
+
+<p>The other method we will apply in this article is firmware uploading via direct access to flash. For this, we will use <code class="language-plaintext highlighter-rouge">CH341A flash programmer</code> with <code class="language-plaintext highlighter-rouge">SOIC8 clip</code>.</p>
+
+<p><img src="/images/ch341a.png" alt="ch341a" /></p>
+
+<p><img src="/images/ch341a_2.png" alt="ch341a_2" /></p>
+
+<p>We’ll use the <code class="language-plaintext highlighter-rouge">flashrom</code> tool to write the firmware to flash. The <code class="language-plaintext highlighter-rouge">-p</code> parameter is used for the programmer name, and the <code class="language-plaintext highlighter-rouge">-c</code> parameter is for the flash chip name.</p>
+
+<p><img src="/images/flashing.png" alt="flashing" /></p>
+
+<p>After about 10 minutes of operation, we have now written our backdoored firmware to flash. Now it’s time to power up the device and test if the telnet port is active.</p>
+
+<p><img src="/images/shell.png" alt="shell" /></p>
+
+<p>YAY! 
+Mission completed.</p>
+
+</div>
+
+
+<div class="comments">
+<div id="disqus_thread"></div>
+<script>
+ var disqus_config = function () {
+     this.page.url = 'http://localhost:4000/2021/07/14/Xiaomi-Smart-Camera-Recovering-Firmware-and-Backdooring.html';
+     this.page.identifier = '/2021/07/14/Xiaomi-Smart-Camera---Recovering-Firmware-and-Backdooring';
+     this.page.title = 'Xiaomi Smart Camera - Recovering Firmware and Backdooring';
+ };
+
+ (function() {  // REQUIRED CONFIGURATION VARIABLE: EDIT THE SHORTNAME BELOW
+     var d = document, s = d.createElement('script');
+
+     s.src = '//sungurlabs-github-io.disqus.com/embed.js';
+
+     s.setAttribute('data-timestamp', +new Date());
+     (d.head || d.body).appendChild(s);
+ })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+
+</div>
+
+
+
+
+<div class="related">
+  <h2>related posts</h2>
+  <ul class="related-posts">
+    
+      <li>
+        <h3>
+          <a href="/2021/09/30/write-up-damn-vulnerable-arm-router.html">
+            [write-up] Damn Vulnerable Arm Router
+          </a>
+        </h3>
+      </li>
+    
+  </ul>
+</div>
+
+
+
+
+  
+  <h2>all tags</h2>
+  <div class="tag-cloud"><a href="/tag/camera/" class="set-1">camera</a> <a href="/tag/exploitation/" class="set-1">exploitation</a> <a href="/tag/hardware/" class="set-5">hardware</a> <a href="/tag/iot/" class="set-5">iot</a> <a href="/tag/router/" class="set-1">router</a> <a href="/tag/vulnerability/" class="set-1">vulnerability</a></div>
+  
+
+
+
+
+<script>
+  let i = 0;
+  const text = 'This article explains the steps we take until we get root shell access on the device.';
+  const speed = parseInt('50');
+  
+  function typeWriter() {
+    if (i < text.length) {
+      document.getElementById('animated-post-description').innerHTML += text.charAt(i);
+      i++;
+      setTimeout(typeWriter, speed);
+    }
+  }
+
+  document.getElementById('animated-post-description').style.display = 'initial';
+  typeWriter();
+
+  // Image modal
+  var $imgs = [];
+  $('img').each(function(idx) {
+    var obj = {
+      src: $(this).attr('src')
+    }
+    $imgs.push(obj);
+    var elem = $(this);
+    $(this).click(function() {
+      $('.modal').magnificPopup('open', idx);
+    });
+  });
+
+  $('.modal').magnificPopup({
+    items: $imgs,
+    type: 'image',
+    closeOnContentClick: true,
+    mainClass: 'mfp-img-mobile',
+    image: {
+      verticalFit: true
+    }
+    
+  });
+</script>
+
+      </div>
+    </main><footer class="site-footer">
+  <div class="wrapper">
+    <div class="credits"><a href="https://github.com/bitbrain/jekyll-dash">dash</a> theme for Jekyll by <a href="https://github.com/bitbrain">bitbrain</a> made with <i class="fas fa-heart"></i><div class="toggleWrapper">
+    <input type="checkbox" class="dn" id="theme-toggle" onclick="modeSwitcher()" checked />
+    <label for="theme-toggle" class="toggle">
+    <span class="toggle__handler">
+      <span class="crater crater--1"></span>
+      <span class="crater crater--2"></span>
+      <span class="crater crater--3"></span>
+    </span>
+        <span class="star star--1"></span>
+        <span class="star star--2"></span>
+        <span class="star star--3"></span>
+        <span class="star star--4"></span>
+        <span class="star star--5"></span>
+        <span class="star star--6"></span>
+    </label>
+</div>
+<script type="text/javascript">
+const theme = localStorage.getItem('theme');
+
+if (theme === "light") {
+    document.documentElement.setAttribute('data-theme', 'light');
+} else {
+    document.documentElement.setAttribute('data-theme', 'dark');
+}
+const userPrefers = getComputedStyle(document.documentElement).getPropertyValue('content');
+
+function activateDarkTheme() {
+    document.getElementById('theme-toggle').checked = true;
+    document.documentElement.setAttribute('data-theme', 'dark');
+    document.documentElement.classList.add('theme--dark');
+    document.documentElement.classList.remove('theme--light');
+	document.getElementById("theme-toggle").className = 'light';
+	window.localStorage.setItem('theme', 'dark');
+}
+
+function activateLightTheme() {
+    document.getElementById('theme-toggle').checked = false;
+    document.documentElement.setAttribute('data-theme', 'light');
+    document.documentElement.classList.add('theme--light');
+    document.documentElement.classList.remove('theme--dark');
+	document.getElementById("theme-toggle").className = 'dark';
+	window.localStorage.setItem('theme', 'light');
+}
+
+if (theme === "dark") {
+    activateDarkTheme();
+} else if (theme === "light") {
+    activateLightTheme();
+} else if  (userPrefers === "light") {
+    activateDarkTheme();
+} else {
+    activateDarkTheme();
+}
+
+function modeSwitcher() {
+	let currentMode = document.documentElement.getAttribute('data-theme');
+	if (currentMode === "dark") {
+	    activateLightTheme();
+	} else {
+	    activateDarkTheme();
+	}
+}
+</script></div>
+  </div>
+</footer>
+
+
+<script>
+      window.FontAwesomeConfig = {
+        searchPseudoElements: true
+      }
+    </script>
+  </body>
+
+</html>
